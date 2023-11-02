@@ -1,0 +1,3 @@
+manca:
+- tutto
+- fare la parte di render del singolo utente e verificare se i placeholder utilizzati vengono renderizzati
