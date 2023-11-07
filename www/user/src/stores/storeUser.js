@@ -7,7 +7,6 @@ enableMapSet();
 export const useUser = create(
   immer((set) => ({
     id: null,
-    online: 0,
     chats: [
       {
         id: 1,
@@ -30,10 +29,20 @@ export const useUser = create(
         ],
       },
     ],
+    name: "",
     inizializza: (idUtente) => {
       set((state) => {
         state.id = idUtente;
-        state.online = 1;
+      });
+    },
+    setName: (newName) => {
+      set((state) => {
+        state.name = newName;
+      });
+    },
+    setChats: (newChats) => {
+      set((state) => {
+        state.chats = newChats.dataValues;
       });
     },
   }))

@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-const useQueryURL = (paramName) => {
-  const [parametroId, setParametroId] = useState(undefined);
+const useQueryURL = (parameterName) => {
+  const [idParameter, setIdParameter] = useState(undefined);
   useEffect(() => {
-    let p = new URLSearchParams(window.location.search);
-    let p1 = p.get(paramName);
-    setParametroId(p1);
-  }, [paramName]);
-  return { parametroId };
+    let allParameters = new URLSearchParams(window.location.search);
+    let searchedParameter = allParameters.get(parameterName);
+    setIdParameter(searchedParameter);
+  }, [parameterName]);
+  return { idParameter };
 };
 
 export default useQueryURL;
