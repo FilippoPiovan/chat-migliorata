@@ -4,13 +4,22 @@ const onAdminLogin = () => {};
 
 const onUserLogin = async ({ user, callback, utilsDB }) => {
   logger.info(`Utente con id ${user.id} sta provando a collegarsi`);
-  let chats = await utilsDB.connectUser({ userId: user.id });
-  if (chats && chats.length !== 0) {
-    // logger.info(`${user.id} aveva delle chat`);
-    callback({ status: "ok", chats });
+  if (user.id !== null) {
+    let { userFromDB, chats } = await utilsDB.connectUser({ userId: user.id });
+    if (chats && chats.length !== 0) {
+      // logger.info(`${user.id} aveva delle chat`);
+      logger.info("Userfromdb: ", userFromDB);
+      callback({ status: "0", chats, userFromDB });
+    } else {
+      // logger.info(`${user.id} non aveva delle chat`);
+      callback({ status: "1", userFromDB });
+    }
   } else {
-    // logger.info(`${user.id} non aveva delle chat`);
-    callback({ status: "ko" });
+    callback({
+      status: "2",
+      error:
+        "Non hai inserito correttamente l'id nell'URL, prova con http://localhost:[porta]/?id=valore",
+    });
   }
 };
 

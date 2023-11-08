@@ -106,17 +106,19 @@ const setAllUsersDisconnected = async () => {
 const connectUser = async ({ userId }) => {
   // logger.info(`${userId} sta provando a connettersi`);
   let chats = undefined;
-  const [user, created] = await User.findOrCreate({
+  let randomName = `User#${Math.round(Math.random() * 999999)}`;
+  logger.warn(`RandomName ${randomName}`);
+  const [userFromDB, created] = await User.findOrCreate({
     where: { id: userId },
     defaults: {
       id: userId,
       online: 1,
-      name: "user",
+      name: randomName,
     },
   });
   if (!created) {
-    user.online = 1;
-    await user.save();
+    userFromDB.online = 1;
+    await userFromDB.save();
     chats = await Message.findAll({
       where: {
         UserId: userId,
@@ -126,9 +128,8 @@ const connectUser = async ({ userId }) => {
         ["createdAt", "ASC"],
       ],
     });
-    // console.log(chats);
   }
-  return chats;
+  return { userFromDB, chats };
 };
 
 const changeUsername = async ({ user }) => {
