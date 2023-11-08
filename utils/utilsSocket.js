@@ -5,14 +5,15 @@ const onAdminLogin = () => {};
 const onUserLogin = async ({ user, callback, utilsDB }) => {
   logger.info(`Utente con id ${user.id} sta provando a collegarsi`);
   if (user.id !== null) {
-    let { userFromDB, chats } = await utilsDB.connectUser({ userId: user.id });
+    let { userFromDB, chats, usersFromDB } = await utilsDB.connectUser({
+      userId: user.id,
+    });
     if (chats && chats.length !== 0) {
       // logger.info(`${user.id} aveva delle chat`);
-      logger.info("Userfromdb: ", userFromDB);
-      callback({ status: "0", chats, userFromDB });
+      callback({ status: "0", chats, userFromDB, usersFromDB });
     } else {
       // logger.info(`${user.id} non aveva delle chat`);
-      callback({ status: "1", userFromDB });
+      callback({ status: "1", userFromDB, usersFromDB });
     }
   } else {
     callback({
@@ -23,13 +24,8 @@ const onUserLogin = async ({ user, callback, utilsDB }) => {
   }
 };
 
-const onNameChanging = async ({ user, callback, utilsDB }) => {
-  let res = await utilsDB.changeUsername({ user });
-  if (res === "ko") {
-    callback({ status: "ko" });
-  } else {
-    callback({ status: "ok", name: res });
-  }
+const onNameChanging = async ({ user, utilsDB }) => {
+  await utilsDB.changeUsername({ user });
 };
 
 const onLogout = async ({ userId, utilsDB }) => {
@@ -45,8 +41,9 @@ export async function socketEventsHandler(io, utilsDB) {
       await onUserLogin({ user, callback, utilsDB });
       socket.userId = user.id;
     });
-    socket.on("name-changed", (user, callback) => {
-      onNameChanging({ user, callback, utilsDB });
+    socket.on("name-changed", (user) => {
+      logger.warn(user.name);
+      onNameChanging({ user, utilsDB });
     });
     socket.on("disconnect", () => {
       socket.removeAllListeners();

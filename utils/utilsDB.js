@@ -1,5 +1,6 @@
 import { DataTypes, Sequelize } from "sequelize";
 import { logger } from "./log.js";
+import { io } from "../server-index.js";
 
 const sequelize = new Sequelize({
   dialect: "sqlite",
@@ -20,7 +21,7 @@ const User = sequelize.define("User", {
     allowNull: false,
     primaryKey: true,
   },
-  name: {
+  userName: {
     type: DataTypes.STRING,
     defaultValue: "User",
   },
@@ -36,14 +37,14 @@ const Chat = sequelize.define("Chat", {
     autoIncrement: true,
     primaryKey: true,
   },
-  nome: {
+  chatName: {
     type: DataTypes.STRING,
     defaultValue: null,
   },
 });
 
 const Message = sequelize.define("Message", {
-  testo: {
+  text: {
     type: DataTypes.TEXT,
     allowNull: false,
     defaultValue: "Scrivi per mandare un messaggio",
@@ -56,6 +57,10 @@ User.afterCreate(async () => {
 
 User.afterDestroy(async () => {
   logger.info("utente distrutto");
+});
+
+User.afterUpdate(async () => {
+  logger.info("utente aggiornato");
 });
 
 Chat.afterCreate(async () => {
@@ -107,13 +112,12 @@ const connectUser = async ({ userId }) => {
   // logger.info(`${userId} sta provando a connettersi`);
   let chats = undefined;
   let randomName = `User#${Math.round(Math.random() * 999999)}`;
-  logger.warn(`RandomName ${randomName}`);
   const [userFromDB, created] = await User.findOrCreate({
     where: { id: userId },
     defaults: {
       id: userId,
       online: 1,
-      name: randomName,
+      userName: randomName,
     },
   });
   if (!created) {
@@ -129,15 +133,29 @@ const connectUser = async ({ userId }) => {
       ],
     });
   }
-  return { userFromDB, chats };
+  let usersFromDB = await getAllUsers({});
+  return { userFromDB, chats, usersFromDB };
+};
+
+const getAllUsers = async ({ connected }) => {
+  let ret = undefined;
+  if (connected) {
+    ret = await User.findAll({ where: { online: connected } });
+  } else {
+    ret = await User.findAll();
+  }
+  // estrapolare solo i dataValues degli utenti
+  return ret;
 };
 
 const changeUsername = async ({ user }) => {
-  return await User.update({ name: user.name }, { where: { id: user.id } });
+  let userFound = await User.findByPk(user.id);
+  userFound.userName = user.name;
+  await userFound.save();
 };
 
 const disconnectUser = async ({ userId }) => {
-  console.log(userId);
+  // console.log(userId);
   await User.update({ online: 0 }, { where: { id: userId } });
 };
 
