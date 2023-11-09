@@ -27,7 +27,7 @@ function NavbarContainer() {
 
   return (
     <>
-      <Navbar className="">
+      <Navbar>
         <NavbarBrand className="sm:flex gap-4">
           <Avatar
             showFallback
@@ -42,6 +42,11 @@ function NavbarContainer() {
               setName(e.target.value);
             }}
             onBlur={() => onNameChanged()}
+            onKeyDown={(e) => {
+              if (e.code === "Enter") {
+                console.log("invio");
+              }
+            }}
             label="Username:"
             placeholder={" "}
             value={name}

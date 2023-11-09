@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
 import { socket } from "../socket/socket.js";
 import { useUser } from "../stores/storeUser.js";
+import { useUsers } from "../stores/storeUsers.js";
+// import { useChats } from "../stores/storeChats.js";
 
 const useSocketEvents = () => {
   const [isSocketConnected, setIsSocketConnected] = useState(false);
-  const { inizializza } = useUser();
+  const { id, inizializza } = useUser();
+  const { setUsers } = useUsers();
 
   useEffect(() => {
     const onConnect = () => {
@@ -21,11 +24,17 @@ const useSocketEvents = () => {
       inizializza(idUtente);
     };
 
+    const onUserUpdated = (allUsers) => {
+      setUsers({ newUsers: allUsers, id });
+    };
+
     socket.on("connect", onConnect);
 
     socket.on("disconnect", onDisconnect);
 
     socket.on("inizializza", onInizializza);
+
+    socket.on("user-updated", onUserUpdated);
 
     return () => {
       socket.off("connect", onConnect);
@@ -33,8 +42,10 @@ const useSocketEvents = () => {
       socket.off("disconnect", onDisconnect);
 
       socket.off("inizializza", onInizializza);
+
+      socket.off("user-updated", onUserUpdated);
     };
-  }, [inizializza]);
+  }, [id, inizializza, setUsers]);
 
   return { socket, isSocketConnected };
 };

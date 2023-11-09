@@ -1,27 +1,21 @@
-export const errorManager = ({
+export const callbackManager = ({
   ret,
   idParameter,
-  inizializza,
-  setName,
-  setChat,
   setError,
+  initialize,
+  setChats,
+  setUsers,
 }) => {
   switch (ret.status) {
-    case "0":
-      // l'utente aveva delle chat
-      inizializza(idParameter);
-      setName(ret.userFromDB.name);
-      setChat(ret.chats);
-
-      console.log("setFarloccoChat");
+    case "user-initialization":
+      // l'utente si è connesso
+      initialize({ userId: idParameter, userName: ret.user.userName });
+      ret.chats && ret.chats.length !== 0 && console.log("chat presenti");
+      ret.chats && ret.chats.length !== 0 && setChats({ newChats: ret.chats });
+      setUsers({ newUsers: ret.allUsers, id: idParameter });
+      console.log("inizializzazione utente");
       break;
-    case "1":
-      // l'utente non aveva delle chat
-      console.log("utente senza chat");
-      inizializza(idParameter);
-      setName(ret.userFromDB.name);
-      break;
-    case "2":
+    case "wrong-url":
       // l'utente ha sbagliato l'URL
       setError(ret.error);
       break;

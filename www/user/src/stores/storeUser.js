@@ -8,21 +8,15 @@ export const useUser = create(
   immer((set) => ({
     id: null,
     name: "",
-    chats: [],
-    users: [],
-    inizializza: (idUtente) => {
+    initialize: ({ userId, userName }) => {
       set((state) => {
-        state.id = idUtente;
+        state.id = userId;
+        state.name = userName;
       });
     },
     setName: (newName) => {
       set((state) => {
         state.name = newName;
-      });
-    },
-    setChats: (newChats) => {
-      set((state) => {
-        state.chats = newChats.dataValues;
       });
     },
   }))

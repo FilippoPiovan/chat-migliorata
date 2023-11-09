@@ -1,14 +1,19 @@
 import { useUser } from "./stores/storeUser.js";
+import { useUsers } from "./stores/storeUsers.js";
+import { useChats } from "./stores/storeChats.js";
 import { useEffect, useState } from "react";
 import useSocketEvents from "./hooks/useSocket.js";
 import useQueryURL from "./hooks/useQueryURL.js";
 import Messagges from "./components/Messagges.jsx";
 import NavbarContainer from "./components/NavbarContainer.jsx";
-import { errorManager } from "./utils/utilsApp.js";
+import Error from "./components/Error.jsx";
+import { callbackManager } from "./utils/utilsApp.js";
 
 function User() {
   const { socket, isSocketConnected } = useSocketEvents();
-  const { id, chats, setChat, setName, inizializza } = useUser();
+  const { id, setChat, initialize } = useUser();
+  const { chats, setChats } = useChats();
+  const { setUsers } = useUsers();
   const { idParameter } = useQueryURL("id");
   const [error, setError] = useState(undefined);
   // console.log(error);
@@ -16,17 +21,25 @@ function User() {
   useEffect(() => {
     if (isSocketConnected) {
       socket.emit("user-login", { id: idParameter }, (ret) => {
-        errorManager({
+        callbackManager({
           ret,
           idParameter,
-          inizializza,
-          setName,
-          setChat,
           setError,
+          initialize,
+          setChats,
+          setUsers,
         });
       });
     }
-  }, [isSocketConnected, socket, idParameter, setName, setChat, inizializza]);
+  }, [
+    isSocketConnected,
+    socket,
+    idParameter,
+    setChat,
+    initialize,
+    setChats,
+    setUsers,
+  ]);
 
   return (
     <>
@@ -49,7 +62,7 @@ function User() {
         </>
       ) : (
         <>
-          <h1>Problema</h1>
+          <Error />
         </>
       )}
     </>

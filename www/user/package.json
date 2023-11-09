@@ -13,6 +13,7 @@
     "@nextui-org/react": "^2.2.6",
     "framer-motion": "^10.16.4",
     "immer": "^10.0.3",
+    "prop-types": "^15.8.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "socket.io": "^4.7.2",
