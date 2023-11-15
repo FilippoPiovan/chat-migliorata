@@ -20,12 +20,25 @@ const useSocketEvents = () => {
       setIsSocketConnected(false);
     };
 
+    // da aggiungere: chat aggiornate, utenti aggiornati, messaggi aggiornati
     const onInizializza = (idUtente) => {
       inizializza(idUtente);
     };
 
     const onUserUpdated = (allUsers) => {
-      setUsers({ newUsers: allUsers, id });
+      // console.log("utenti aggiornati");
+      setUsers({ users: allUsers, id });
+    };
+
+    const onChatsUpdated = () => {
+      console.log("chats aggiornate, richiedo update");
+      socket.emit("need-my-chats", id, (ret) => {
+        if (ret.status === "ok") {
+          console.log("avevi delle chat");
+        } else {
+          console.log("non avevi delle chat");
+        }
+      });
     };
 
     socket.on("connect", onConnect);
@@ -36,6 +49,8 @@ const useSocketEvents = () => {
 
     socket.on("user-updated", onUserUpdated);
 
+    socket.on("chats-updated", onChatsUpdated);
+
     return () => {
       socket.off("connect", onConnect);
 
@@ -44,6 +59,8 @@ const useSocketEvents = () => {
       socket.off("inizializza", onInizializza);
 
       socket.off("user-updated", onUserUpdated);
+
+      socket.off("chats-updated", onChatsUpdated);
     };
   }, [id, inizializza, setUsers]);
 

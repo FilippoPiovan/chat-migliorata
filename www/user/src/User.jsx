@@ -21,6 +21,7 @@ function User() {
   useEffect(() => {
     if (isSocketConnected) {
       socket.emit("user-login", { id: idParameter }, (ret) => {
+        // console.log(ret);
         callbackManager({
           ret,
           idParameter,
@@ -44,8 +45,13 @@ function User() {
   return (
     <>
       {error === undefined ? (
+        <></>
+      ) : error === null ? (
         <>
-          <NavbarContainer />
+          <NavbarContainer
+            socket={socket}
+            isSocketConnected={isSocketConnected}
+          />
           <p>Id: {id}</p>
           {chats.map((value, key) => {
             return (

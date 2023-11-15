@@ -7,14 +7,10 @@ enableMapSet();
 export const useUsers = create(
   immer((set) => ({
     users: [],
-    setUsers: ({ newUsers, id }) => {
+    setUsers: ({ users, id }) => {
       set((state) => {
-        let indexToDelete = newUsers.findIndex((user) => user.id === id);
-        newUsers.splice(indexToDelete, 1);
-        state.users = newUsers;
-        // let indexToDelete = newUsers.findIndex((user) => user.id === id);
-        // state.users = newUsers;
-        // state.users.splice(indexToDelete, 1);
+        // se da errore cambia il nome nel socket
+        state.users = users.filter((user) => user.id !== id);
       });
     },
   }))

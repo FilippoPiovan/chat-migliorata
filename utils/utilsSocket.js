@@ -2,22 +2,17 @@ import { logger } from "./log.js";
 
 const onAdminLogin = () => {};
 
-const onUserLogin = async ({ user, callback, utilsDB }) => {
-  logger.info(`Utente con id ${user.id} sta provando a collegarsi`);
-  if (user.id !== null) {
-    let { userFromDB, chats, usersFromDB } = await utilsDB.connectUser({
-      userId: user.id,
+const onUserLogin = async ({ user: userProp, callback, utilsDB }) => {
+  logger.info(`Utente con id ${userProp.id} sta provando a collegarsi`);
+  if (userProp.id !== null) {
+    let { user, chats, allUsers } = await utilsDB.connectUser({
+      userId: userProp.id,
     });
-    if (chats && chats.length !== 0) {
-      // logger.info(`${user.id} aveva delle chat`);
-      callback({ status: "0", chats, userFromDB, usersFromDB });
-    } else {
-      // logger.info(`${user.id} non aveva delle chat`);
-      callback({ status: "1", userFromDB, usersFromDB });
-    }
+    // logger.info(`${user.id} aveva delle chat`);
+    callback({ status: "user-initialization", chats, user, allUsers });
   } else {
     callback({
-      status: "2",
+      status: "wrong-url",
       error:
         "Non hai inserito correttamente l'id nell'URL, prova con http://localhost:[porta]/?id=valore",
     });
@@ -26,6 +21,20 @@ const onUserLogin = async ({ user, callback, utilsDB }) => {
 
 const onNameChanging = async ({ user, utilsDB }) => {
   await utilsDB.changeUsername({ user });
+};
+
+const onCreateChat = async ({ id, data, callback, utilsDB }) => {
+  logger.info(`Richiesta creazione nuova chat`);
+  let ret = await utilsDB.createChat({ id, data });
+  ret.length === 0 ? callback({ status: "ok" }) : callback({ status: "ok" });
+};
+
+const onNeedMyChats = async ({ id, callback, utilsDB }) => {
+  let chats = await utilsDB.getChatsByUserId({ id });
+  console.log("chats in onNeedMyChats", chats);
+  chats
+    ? callback({ ret: { status: "ok", chats: chats } })
+    : callback({ ret: { status: "ko" } });
 };
 
 const onLogout = async ({ userId, utilsDB }) => {
@@ -42,11 +51,16 @@ export async function socketEventsHandler(io, utilsDB) {
       socket.userId = user.id;
     });
     socket.on("name-changed", (user) => {
-      logger.warn(user.name);
       onNameChanging({ user, utilsDB });
     });
+    socket.on("create-chat", (data, callback) => {
+      onCreateChat({ id: socket.userId, data, callback, utilsDB });
+    });
+    socket.on("need-my-chats", (id, callback) => {
+      onNeedMyChats({ id, callback, utilsDB });
+    });
     socket.on("disconnect", () => {
-      socket.removeAllListeners();
+      // socket.removeAllListeners();
       logger.info(`Client disconnesso ${socket.userId}`);
       onLogout({ userId: socket.userId, utilsDB });
     });

@@ -12,8 +12,9 @@ export const callbackManager = ({
       initialize({ userId: idParameter, userName: ret.user.userName });
       ret.chats && ret.chats.length !== 0 && console.log("chat presenti");
       ret.chats && ret.chats.length !== 0 && setChats({ newChats: ret.chats });
-      setUsers({ newUsers: ret.allUsers, id: idParameter });
-      console.log("inizializzazione utente");
+      setUsers({ users: ret.allUsers, id: idParameter });
+      setError(null);
+      // console.log("inizializzazione utente");
       break;
     case "wrong-url":
       // l'utente ha sbagliato l'URL

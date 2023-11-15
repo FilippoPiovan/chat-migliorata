@@ -7,14 +7,12 @@ import {
   Avatar,
   Chip,
 } from "@nextui-org/react";
-import useSocketEvents from "../hooks/useSocket.js";
 import { useUser } from "../stores/storeUser.js";
 import ModalContainer from "./ModalContainer.jsx";
+import PropTypes from "prop-types";
 
-function NavbarContainer() {
-  const { socket, isSocketConnected } = useSocketEvents();
+function NavbarContainer({ socket, isSocketConnected }) {
   const { id, name, setName } = useUser();
-
   const onNameChanged = () => {
     socket.emit("name-changed", { name, id }, (ret) => {
       if (ret.status === "ko") {
@@ -42,18 +40,13 @@ function NavbarContainer() {
               setName(e.target.value);
             }}
             onBlur={() => onNameChanged()}
-            onKeyDown={(e) => {
-              if (e.code === "Enter") {
-                console.log("invio");
-              }
-            }}
             label="Username:"
             placeholder={" "}
             value={name}
             className="w-3/5 ml-4"
           />
         </NavbarBrand>
-        <ModalContainer />
+        <ModalContainer socket={socket} isSocketConnected={isSocketConnected} />
         <NavbarContent justify="end">
           <NavbarItem>
             <Chip
@@ -70,3 +63,8 @@ function NavbarContainer() {
 }
 
 export default NavbarContainer;
+
+NavbarContainer.propTypes = {
+  socket: PropTypes.object,
+  isSocketConnected: PropTypes.bool,
+};
