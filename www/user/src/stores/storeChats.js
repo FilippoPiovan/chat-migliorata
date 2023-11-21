@@ -10,6 +10,7 @@ export const useChats = create(
     setChats: ({ newChats }) => {
       set((state) => {
         state.chats = newChats;
+        // console.log("chat nello store", state.chats);
       });
     },
   }))

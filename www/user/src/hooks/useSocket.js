@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { socket } from "../socket/socket.js";
 import { useUser } from "../stores/storeUser.js";
 import { useUsers } from "../stores/storeUsers.js";
-// import { useChats } from "../stores/storeChats.js";
+import { useChats } from "../stores/storeChats.js";
 
 const useSocketEvents = () => {
   const [isSocketConnected, setIsSocketConnected] = useState(false);
   const { id, inizializza } = useUser();
   const { setUsers } = useUsers();
+  const { setChats } = useChats();
 
   useEffect(() => {
     const onConnect = () => {
@@ -32,13 +33,13 @@ const useSocketEvents = () => {
 
     const onChatsUpdated = () => {
       console.log("chats aggiornate, richiedo update");
-      socket.emit("need-my-chats", id, (ret) => {
+      socket.emit("need-my-chats", id, ({ ret }) => {
         console.log(ret);
         console.log("status: ", ret.status);
         if (ret.status === "ok") {
           console.log("avevi delle chat");
-        } else {
-          console.log("non avevi delle chat");
+          console.log("ret.chats: ", ret.chats);
+          setChats({ newChats: ret.chats });
         }
       });
     };

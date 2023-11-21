@@ -8,10 +8,11 @@ import Messagges from "./components/Messagges.jsx";
 import NavbarContainer from "./components/NavbarContainer.jsx";
 import Error from "./components/Error.jsx";
 import { callbackManager } from "./utils/utilsApp.js";
+import { Divider } from "@nextui-org/react";
 
 function User() {
   const { socket, isSocketConnected } = useSocketEvents();
-  const { id, setChat, initialize } = useUser();
+  const { setChat, initialize } = useUser();
   const { chats, setChats } = useChats();
   const { setUsers } = useUsers();
   const { idParameter } = useQueryURL("id");
@@ -21,7 +22,7 @@ function User() {
   useEffect(() => {
     if (isSocketConnected) {
       socket.emit("user-login", { id: idParameter }, (ret) => {
-        // console.log(ret);
+        // console.log("return: ", ret);
         callbackManager({
           ret,
           idParameter,
@@ -52,19 +53,27 @@ function User() {
             socket={socket}
             isSocketConnected={isSocketConnected}
           />
-          <p>Id: {id}</p>
-          {chats.map((value, key) => {
-            return (
-              <div key={key} className="contenitore">
-                <div className="header">
-                  <h1>{value.nome}</h1>
-                </div>
-                <div className="body">
-                  <Messagges messaggi={value.messaggi}></Messagges>
-                </div>
-              </div>
-            );
-          })}{" "}
+          <Divider />
+          <div className="">
+            <div className="menuChats">
+              {chats.map((value, key) => {
+                return (
+                  <div key={key} className="contenitore">
+                    <div className="header">
+                      <h1>Chat {value.chatName}</h1>
+                    </div>
+                    <div className="body">
+                      <Messagges
+                        messaggi={value.Messages}
+                        signleLine={true}
+                      ></Messagges>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="chat"></div>
+          </div>
         </>
       ) : (
         <>

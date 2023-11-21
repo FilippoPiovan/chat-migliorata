@@ -139,7 +139,6 @@ const setAllUsersDisconnected = async () => {
 
 const connectUser = async ({ userId }) => {
   // logger.info(`${userId} sta provando a connettersi`);
-  let chatsFromDB = undefined;
   let chats = [];
   let randomName = `User#${Math.round(Math.random() * 999999)}`;
   let [userDB, created] = await User.findOrCreate({
@@ -153,18 +152,7 @@ const connectUser = async ({ userId }) => {
   if (!created) {
     userDB.online = 1;
     await userDB.save();
-    chatsFromDB = await Message.findAll({
-      where: {
-        UserId: userId,
-      },
-      order: [
-        ["ChatId", "ASC"],
-        ["createdAt", "ASC"],
-      ],
-    });
-    for (let chat of chatsFromDB) {
-      chats.push(chat.dataValues);
-    }
+    chats = await getChatsByUserId({ id: userId });
   }
   let allUsers = await getAllUsers({
     who: "all",
@@ -193,20 +181,25 @@ const getAllUsers = async ({ who }) => {
   return ret;
 };
 
-const getChatsByUserId = async ({ id: mioId }) => {
-  let user = await User.findOne({
-    where: { id: mioId },
+const getChatsByUserId = async ({ id }) => {
+  let chats = await Chat.findAll({
     include: [
       {
-        model: Chat,
-        through: { model: UserChat },
+        model: Message,
+        include: [
+          {
+            model: User,
+          },
+        ],
       },
+      { model: User, through: { model: UserChat }, where: { id: id } },
     ],
+    order: [["createdAt", "DESC"]],
   });
-  let chats = user ? user.Chats : [];
   chats.length !== 0 &&
     (chats = await getDataValuesFromObject({ objects: chats }));
-  console.log("chats: ", chats);
+  // console.log("chats: ", chats[0].Messages);
+  // console.log("chats: ", chats);
   return chats;
 };
 

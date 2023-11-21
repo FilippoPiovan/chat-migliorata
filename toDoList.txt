@@ -2,23 +2,6 @@ manca:
 - capire come gestire la concorrenza tra gli utenti che provano ad accedere alle loro chat che però non sono ancora state salvate nel DB
 - capire come funzionano le transazioni
 
-
-
-# per Marco
-Chat.afterCreate(async (chat) => {
-
-  console.log("chat creata: ", chat.dataValues);
-
-  let users = await UserChat.findAll({ where: { ChatId: chat.dataValues.id } });
-
-  console.log(users);
-
-}
-
-
-
-Questo metodo dovrebbe mandare agli utenti interessati dall'update le informazioni riguardo la nuova chat, per ottenere gli utenti interessati uso UserChat (tabella di congiunzione tra User e Chat con foreign keys impostate in automatico) e il metodo findAll con clausola where su ChatId, se richiamo il metodo in questo modo users è un'array vuoto, se richiamo lo stesso findAll mettendo manualmente un valore allora mi trova gli utenti giusti.
-
-Ho verificato aggiungendo una stampa prima del findAll che la chat appena creata esista in UserChat e quindi non è un problema di "concorrenza", ho provato ad usare una variabile con il valore di chat.dataValues.id ma non funziona.
-
-Ho chiesto a ChatGPT e a Copilot ma non riescono a capire quale sia il problema.
+SELECT DISTINCT Users.id as idUser, Chats.id as idChat, M1.text, M1.id as idMess, M1.createdAt, M1.updatedAt
+FROM Messages as M1 join Chats on M1.ChatId = Chats.id, Users join Messages as M2 on Users.id = M2.UserId
+WHERE Users.id = 1;

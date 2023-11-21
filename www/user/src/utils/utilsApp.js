@@ -10,8 +10,12 @@ export const callbackManager = ({
     case "user-initialization":
       // l'utente si è connesso
       initialize({ userId: idParameter, userName: ret.user.userName });
-      ret.chats && ret.chats.length !== 0 && console.log("chat presenti");
-      ret.chats && ret.chats.length !== 0 && setChats({ newChats: ret.chats });
+      ret.chats &&
+        ret.chats.length !== 0 &&
+        // console.log("chat presenti: ", ret.chats);
+        ret.chats &&
+        ret.chats.length !== 0 &&
+        setChats({ newChats: ret.chats });
       setUsers({ users: ret.allUsers, id: idParameter });
       setError(null);
       // console.log("inizializzazione utente");

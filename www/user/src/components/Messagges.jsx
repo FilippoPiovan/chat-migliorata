@@ -6,12 +6,11 @@ function Messagges({ messaggi }) {
       {messaggi.map((messaggio, chiave) => {
         return (
           <p key={chiave}>
-            {messaggio.utente}: {messaggio.testo}
+            {messaggio.User.userName}: {messaggio.text} {messaggio.createdAt}
           </p>
         );
       })}
     </>
-    // <p>No</p>
   );
 }
 

@@ -9,6 +9,7 @@ const onUserLogin = async ({ user: userProp, callback, utilsDB }) => {
       userId: userProp.id,
     });
     // logger.info(`${user.id} aveva delle chat`);
+    console.log("chats al login: ", chats);
     callback({ status: "user-initialization", chats, user, allUsers });
   } else {
     callback({
@@ -33,6 +34,7 @@ const onCreateChat = async ({ id, data, callback, utilsDB }) => {
 
 const onNeedMyChats = async ({ id, callback, utilsDB }) => {
   let chats = await utilsDB.getChatsByUserId({ id });
+  // let messagesChats = await utilsDB.getMessagesFromChat({ chats });
   chats
     ? callback({ ret: { status: "ok", chats: chats } })
     : callback({ ret: { status: "ko" } });
