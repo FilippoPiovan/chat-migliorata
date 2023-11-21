@@ -33,6 +33,8 @@ const useSocketEvents = () => {
     const onChatsUpdated = () => {
       console.log("chats aggiornate, richiedo update");
       socket.emit("need-my-chats", id, (ret) => {
+        console.log(ret);
+        console.log("status: ", ret.status);
         if (ret.status === "ok") {
           console.log("avevi delle chat");
         } else {

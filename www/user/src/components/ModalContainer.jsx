@@ -28,11 +28,15 @@ export default function App({ socket }) {
     console.log("Chat creata, seh, credeghe");
     // groupSelected ['NomeUno', 'NomeDue', ... , 'NomeN']
     socket.emit("create-chat", { groupSelected, newGroupName }, (ret) => {
-      // la chat viene passata una volta che viene creata nel DB grazie a 'afterCreate'
-      // alert per avvertire del successo o meno dell'operazione
+      // la chat arriva all'utente una volta che viene creata nel DB grazie a 'afterBulkCreate'
+      // alert per avvertire del successo o meno dell'operazione (non funziona benissimo)
+
+      // ret.status === "ok"
+      //   ? alert("operazione andata a buon fine")
+      //   : alert("chat non creata");
       ret.status === "ok"
-        ? alert("operazione andata a buon fine")
-        : alert("chat non creata");
+        ? console.log("operazione andata a buon fine")
+        : console.log("operazione NON andata a buon fine");
     });
     setCurrentPage("Seleziona utenti");
     setGroupSelected([]);

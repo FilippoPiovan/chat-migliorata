@@ -58,6 +58,14 @@ const Message = sequelize.define("Message", {
 
 const UserChat = sequelize.define("UserChat");
 
+Message.belongsTo(User);
+User.hasMany(Message);
+Message.belongsTo(Chat);
+Chat.hasMany(Message);
+
+User.belongsToMany(Chat, { through: UserChat });
+Chat.belongsToMany(User, { through: UserChat });
+
 User.afterCreate(async () => {
   logger.info("utente creato");
   io.emit("user-updated", await getAllUsers({ who: "all" }));
@@ -73,7 +81,7 @@ User.afterUpdate(async () => {
   io.emit("user-updated", await getAllUsers({ who: "all" }));
 });
 
-Chat.afterCreate(async (chat) => {
+Chat.afterCreate(async () => {
   logger.info("chat creata");
 });
 
@@ -85,16 +93,11 @@ Chat.afterDestroy(async () => {
   logger.info("chat distrutta");
 });
 
-UserChat.afterCreate(async () => {
+UserChat.afterBulkCreate(async () => {
   // dopo che una chat è stata creata non è un bene che tutti possano vedere tutte le chat perché devo mandarlo solo a pochi utenti
-  // mando un "ping" a tutti gli utenti che risponderanno in un canale "need-my-chats"
+  // mando un "ping" a tutti gli utenti che risponderanno nel canale "need-my-chats"
 
-  logger.warn("UserChat creato");
-  // let users = await UserChat.findAll({
-  //   where: { ChatId: chat.dataValues.id },
-  // });
-  // users.length !== 0 && (users = await getDataValuesFromObject(users));
-  // console.log(users);
+  logger.warn("UserChats creati");
 
   // serve solo per avvisare tutti che una chat è stata modificata (senza specificare quale)
   io.emit("chats-updated");
@@ -107,16 +110,6 @@ Message.afterCreate(async () => {
 Message.afterDestroy(async () => {
   logger.info("messaggio eliminato");
 });
-
-// User.belongsToMany(Chat, { through: Message });
-// Chat.belongsToMany(User, { through: Message });
-Message.belongsTo(User);
-User.hasMany(Message);
-Message.belongsTo(Chat);
-Chat.hasMany(Message);
-
-User.belongsToMany(Chat, { through: UserChat });
-Chat.belongsToMany(User, { through: UserChat });
 
 const synchronizeDB = async () => {
   let ret = false;
@@ -180,7 +173,6 @@ const connectUser = async ({ userId }) => {
 };
 
 const getAllUsers = async ({ who }) => {
-  // console.log("qualcuno richiede tutti gli utenti");
   let users = undefined;
   let ret = [];
   switch (who) {
@@ -201,18 +193,20 @@ const getAllUsers = async ({ who }) => {
   return ret;
 };
 
-const getChatsByUserId = async ({ id }) => {
-  // console.log("id: ", id);
-  let chats = await UserChat.findAll(
-    { where: { UserId: id } },
-    { include: User }
-  );
+const getChatsByUserId = async ({ id: mioId }) => {
+  let user = await User.findOne({
+    where: { id: mioId },
+    include: [
+      {
+        model: Chat,
+        through: { model: UserChat },
+      },
+    ],
+  });
+  let chats = user ? user.Chats : [];
   chats.length !== 0 &&
     (chats = await getDataValuesFromObject({ objects: chats }));
-  console.log(
-    "Qualcuno ha richiesto delle chat dopo un aggiornamento\nchats: ",
-    chats
-  );
+  console.log("chats: ", chats);
   return chats;
 };
 
@@ -225,25 +219,19 @@ const changeUsername = async ({ user }) => {
 const createChat = async ({ id, data }) => {
   const name = await getUserName({ id });
   data.groupSelected.push(name.userName);
-
   let newChat = await Chat.create({ chatName: data.newGroupName });
-  console.log("chat creata nel metodo createChat");
   let usersOfTheGroup = await User.findAll({
     where: { userName: data.groupSelected },
   });
-  let ret = [];
-  for (let user of usersOfTheGroup) {
-    ret = await newChat.addUser(user);
-  }
-  console.log("ret alla fine di createChat: ", ret);
+  let usersChatsMap = usersOfTheGroup.map((user) => {
+    return { UserId: user.id, ChatId: newChat.dataValues.id };
+  });
+  let ret = await UserChat.bulkCreate(usersChatsMap);
   return ret;
 };
 
 const getUserName = async ({ id }) => {
-  let user = await User.findOne(
-    { attributes: ["userName"] },
-    { where: { id: id } }
-  );
+  let user = await User.findByPk(id);
   return user;
 };
 

@@ -25,13 +25,14 @@ const onNameChanging = async ({ user, utilsDB }) => {
 
 const onCreateChat = async ({ id, data, callback, utilsDB }) => {
   logger.info(`Richiesta creazione nuova chat`);
+  // console.log("Dati dentro onCreateChat: ", id, data);
   let ret = await utilsDB.createChat({ id, data });
-  ret.length === 0 ? callback({ status: "ok" }) : callback({ status: "ok" });
+  // console.log("ret: ", ret);
+  ret.length === 0 ? callback({ status: "ko" }) : callback({ status: "ok" });
 };
 
 const onNeedMyChats = async ({ id, callback, utilsDB }) => {
   let chats = await utilsDB.getChatsByUserId({ id });
-  console.log("chats in onNeedMyChats", chats);
   chats
     ? callback({ ret: { status: "ok", chats: chats } })
     : callback({ ret: { status: "ko" } });
