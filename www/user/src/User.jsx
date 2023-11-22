@@ -15,7 +15,7 @@ const CurrentChatOpened = createContext(undefined);
 
 function User() {
   const { socket, isSocketConnected } = useSocketEvents();
-  const { setChat, initialize } = useUser();
+  const { initialize } = useUser();
   const { chats, setChats } = useChats();
   const { setUsers } = useUsers();
   const { idParameter } = useQueryURL("id");
@@ -35,15 +35,7 @@ function User() {
         });
       });
     }
-  }, [
-    isSocketConnected,
-    socket,
-    idParameter,
-    setChat,
-    initialize,
-    setChats,
-    setUsers,
-  ]);
+  }, [isSocketConnected, socket, idParameter, initialize, setChats, setUsers]);
 
   return (
     <>
@@ -67,7 +59,7 @@ function User() {
                     <SideList chats={chats} setCurrentChat={setCurrentChat} />
                   </div>
                   <div
-                    className="bg-blue-200 w-[80%] p-2 overflow-auto flex flex-col"
+                    className="bg-blue-200 w-[80%] overflow-auto flex flex-col"
                     style={{ maxHeight: "calc(100vh - 63px)" }}
                   >
                     <Chat idChat={currentChat} />
