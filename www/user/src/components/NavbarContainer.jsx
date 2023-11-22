@@ -25,7 +25,7 @@ function NavbarContainer({ socket, isSocketConnected }) {
 
   return (
     <>
-      <Navbar>
+      <Navbar position="static" className=" ">
         <NavbarBrand className="sm:flex gap-4">
           <Avatar
             showFallback

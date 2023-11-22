@@ -1,21 +1,26 @@
 import { PropTypes } from "prop-types";
 
-function Messagges({ messaggi }) {
+function Messagges({ messages }) {
+  let last = messages.length;
   return (
     <>
-      {messaggi.map((messaggio, chiave) => {
-        return (
-          <p key={chiave}>
-            {messaggio.User.userName}: {messaggio.text} {messaggio.createdAt}
+      {last !== 0 ? (
+        <div className="w-[100%] max-h-[48px] overflow-hidden">
+          <p>
+            {messages[last - 1].User.userName}: {messages[last - 1].text}
           </p>
-        );
-      })}
+        </div>
+      ) : (
+        <div className="w-[100%] max-h-[48px] overflow-hidden">
+          Rompi tu il ghiaccio
+        </div>
+      )}
     </>
   );
 }
 
 Messagges.propTypes = {
-  messaggi: PropTypes.array,
+  messages: PropTypes.array,
 };
 
 export default Messagges;
