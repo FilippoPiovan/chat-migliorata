@@ -40,7 +40,11 @@ const onNeedMyChats = async ({ id, callback, utilsDB }) => {
     : callback({ ret: { status: "ko" } });
 };
 
-const onSendingMessage = async ({ data, callback, utilsDB }) => {};
+const onSendingMessage = async ({ data, id, callback, utilsDB }) => {
+  logger.info("Richiesta invio messaggio");
+  let stat = await utilsDB.sendMessage({ data, id });
+  callback({ status: stat });
+};
 
 const onLogout = async ({ userId, utilsDB }) => {
   await utilsDB.disconnectUser({ userId });
@@ -66,7 +70,7 @@ export async function socketEventsHandler(io, utilsDB) {
     });
     socket.on("sending-message", (data, callback) => {
       console.log(socket.userId);
-      onSendingMessage({ data, callback, utilsDB });
+      onSendingMessage({ data, id: socket.userId, callback, utilsDB });
     });
     socket.on("disconnect", () => {
       // socket.removeAllListeners();

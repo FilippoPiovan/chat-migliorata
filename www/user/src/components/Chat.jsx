@@ -15,6 +15,18 @@ const Chat = ({ idChat, socket }) => {
     });
   }
 
+  const handleMessageSubmit = () => {
+    if (message.length > 0 && idChat !== null) {
+      console.log("messaggio");
+      socket.emit("sending-message", { idChat, message }, (ret) => {
+        if (ret.status === "ok") {
+          setMessage("");
+          console.log("messaggio inviato");
+        }
+      });
+    }
+  };
+
   // console.log(chats[index]);
   return (
     <>
@@ -68,20 +80,18 @@ const Chat = ({ idChat, socket }) => {
             value={message}
             onValueChange={setMessage}
             color="primary"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleMessageSubmit();
+              }
+            }}
           />
         </div>
         <Button
           isIconOnly
           color="primary"
           className="w-14 h-14"
-          onClick={() => {
-            if (message.length > 0 && idChat !== null) {
-              console.log("messaggio");
-              socket.emit("sending-message", { idChat, message }, (ret) => {
-                console.log(ret);
-              });
-            }
-          }}
+          onClick={handleMessageSubmit}
         >
           <link
             rel="stylesheet"

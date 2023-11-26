@@ -203,6 +203,20 @@ const getChatsByUserId = async ({ id }) => {
   return chats;
 };
 
+const sendMessage = async ({ data, id }) => {
+  let ret = "ko";
+  try {
+    const message = await Message.create({ text: data.message });
+    await message.setUser(id);
+    await message.setChat(data.idChat);
+    await message.save();
+    ret = "ok";
+  } catch (error) {
+    throw new Error(logger.error("Error creating a new message: ", error));
+  }
+  return ret;
+};
+
 const changeUsername = async ({ user }) => {
   let userFound = await User.findByPk(user.id);
   userFound.userName = user.name;
@@ -257,6 +271,7 @@ const utilsDB = {
   createChat,
   disconnectUser,
   getChatsByUserId,
+  sendMessage,
 };
 
 export { utilsDB };
