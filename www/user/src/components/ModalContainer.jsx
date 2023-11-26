@@ -46,7 +46,7 @@ export default function App({ socket }) {
 
   // console.log(groupSelected);
   return (
-    <div className="flex flex-row">
+    <div className="flex flex-row items-center">
       <Button onPress={onOpen}>Nuova chat</Button>
       <Modal
         isOpen={isOpen}

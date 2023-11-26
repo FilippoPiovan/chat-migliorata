@@ -62,7 +62,7 @@ function User() {
                     className="bg-blue-200 w-[80%] overflow-auto flex flex-col"
                     style={{ maxHeight: "calc(100vh - 63px)" }}
                   >
-                    <Chat idChat={currentChat} />
+                    <Chat idChat={currentChat} socket={socket} />
                   </div>
                 </CurrentChatOpened.Provider>
               </div>

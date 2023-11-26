@@ -9,7 +9,7 @@ const onUserLogin = async ({ user: userProp, callback, utilsDB }) => {
       userId: userProp.id,
     });
     // logger.info(`${user.id} aveva delle chat`);
-    console.log("chats al login: ", chats);
+    // console.log("chats al login: ", chats);
     callback({ status: "user-initialization", chats, user, allUsers });
   } else {
     callback({
@@ -40,6 +40,8 @@ const onNeedMyChats = async ({ id, callback, utilsDB }) => {
     : callback({ ret: { status: "ko" } });
 };
 
+const onSendingMessage = async ({ data, callback, utilsDB }) => {};
+
 const onLogout = async ({ userId, utilsDB }) => {
   await utilsDB.disconnectUser({ userId });
 };
@@ -61,6 +63,10 @@ export async function socketEventsHandler(io, utilsDB) {
     });
     socket.on("need-my-chats", (id, callback) => {
       onNeedMyChats({ id, callback, utilsDB });
+    });
+    socket.on("sending-message", (data, callback) => {
+      console.log(socket.userId);
+      onSendingMessage({ data, callback, utilsDB });
     });
     socket.on("disconnect", () => {
       // socket.removeAllListeners();

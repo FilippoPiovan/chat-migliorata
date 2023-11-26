@@ -6,6 +6,7 @@ import {
   NavbarItem,
   Avatar,
   Chip,
+  Modal,
 } from "@nextui-org/react";
 import { useUser } from "../stores/storeUser.js";
 import ModalContainer from "./ModalContainer.jsx";
@@ -25,7 +26,7 @@ function NavbarContainer({ socket, isSocketConnected }) {
 
   return (
     <>
-      <Navbar position="static" className=" ">
+      {/* <Navbar position="static" className=" ">
         <NavbarBrand className="sm:flex gap-4">
           <Avatar
             showFallback
@@ -57,7 +58,38 @@ function NavbarContainer({ socket, isSocketConnected }) {
             </Chip>
           </NavbarItem>
         </NavbarContent>
-      </Navbar>
+      </Navbar> */}
+      <div className="flex justify-around p-1">
+        <div className="flex flex-row justify-start items-center gap-3 px-5">
+          <Avatar
+            showFallback
+            isBordered
+            radius="md"
+            color="primary"
+            className="w-12 h-11 text-large"
+          />
+          <Input
+            type="text"
+            onChange={(e) => {
+              setName(e.target.value);
+            }}
+            onBlur={() => onNameChanged()}
+            label="Username:"
+            placeholder={" "}
+            value={name}
+            className=" ml-4"
+          />
+        </div>
+        <ModalContainer socket={socket} isSocketConnected={isSocketConnected} />
+        <div className="flex items-center">
+          <Chip
+            color={isSocketConnected === false ? "danger" : "success"}
+            variant="dot"
+          >
+            {isSocketConnected === false ? "Offline" : "Online"}
+          </Chip>
+        </div>
+      </div>
     </>
   );
 }

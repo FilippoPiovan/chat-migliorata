@@ -4,10 +4,10 @@ import { useUser } from "../stores/storeUser.js";
 import { Input, Button } from "@nextui-org/react";
 import { useState } from "react";
 
-const Chat = ({ idChat }) => {
+const Chat = ({ idChat, socket }) => {
   const { id } = useUser();
   const { chats } = useChats();
-  const [value, setValue] = useState("");
+  const [message, setMessage] = useState("");
   let index = undefined;
   if (chats) {
     index = chats.findIndex((chat) => {
@@ -15,10 +15,10 @@ const Chat = ({ idChat }) => {
     });
   }
 
-  console.log(chats[index]);
+  // console.log(chats[index]);
   return (
     <>
-      <div className="p-2">
+      <div className="px-3 py-2">
         {idChat !== null ? (
           <h1 className="text-lg font-semibold">
             Chat {chats[index].chatName}
@@ -33,8 +33,8 @@ const Chat = ({ idChat }) => {
         {idChat !== null ? (
           <>
             {chats[index].Messages.map((value, key) => {
-              console.log("value: ", value.UserId === id);
-              console.log("key: ", key);
+              // console.log("value: ", value.UserId === id);
+              // console.log("key: ", key);
               return value.UserId === id ? (
                 <div key={key} className="flex justify-end m-1">
                   <p className="bg-slate-400 max-w-[600px] px-1 rounded-small">
@@ -52,11 +52,12 @@ const Chat = ({ idChat }) => {
           </>
         ) : (
           <div className="flex justify-center items-center h-40">
-            <link
+            {/* <link
               rel="stylesheet"
               href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
             />
-            <span className="material-symbols-outlined">forum</span>
+            <span className="material-symbols-outlined">forum</span> */}
+            <p>Vuoto</p>
           </div>
         )}
       </div>
@@ -64,12 +65,24 @@ const Chat = ({ idChat }) => {
         <div className="w-11/12">
           <Input
             placeholder="Scrivi un messaggio"
-            value={value}
-            onValueChange={setValue}
+            value={message}
+            onValueChange={setMessage}
             color="primary"
           />
         </div>
-        <Button isIconOnly color="primary" className="w-14 h-14">
+        <Button
+          isIconOnly
+          color="primary"
+          className="w-14 h-14"
+          onClick={() => {
+            if (message.length > 0 && idChat !== null) {
+              console.log("messaggio");
+              socket.emit("sending-message", { idChat, message }, (ret) => {
+                console.log(ret);
+              });
+            }
+          }}
+        >
           <link
             rel="stylesheet"
             href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
