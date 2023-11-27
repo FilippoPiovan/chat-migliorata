@@ -29,6 +29,10 @@ const User = sequelize.define("User", {
     type: DataTypes.INTEGER,
     defaultValue: 0,
   },
+  socket: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
 });
 
 const Chat = sequelize.define("Chat", {
@@ -96,15 +100,23 @@ Chat.afterDestroy(async () => {
 UserChat.afterBulkCreate(async () => {
   // dopo che una chat è stata creata non è un bene che tutti possano vedere tutte le chat perché devo mandarlo solo a pochi utenti
   // mando un "ping" a tutti gli utenti che risponderanno nel canale "need-my-chats"
-
   logger.warn("UserChats creati");
 
   // serve solo per avvisare tutti che una chat è stata modificata (senza specificare quale)
   io.emit("chats-updated");
 });
 
-Message.afterCreate(async () => {
-  logger.info("messaggio creato");
+Message.afterCreate(async (message) => {
+  logger.error("nuovo messaggio");
+  io.emit("new-message", {
+    time: Date.now(),
+    idChat: message.dataValues.ChatId,
+    idMessage: message.dataValues.id,
+  });
+});
+
+Message.afterUpdate(async () => {
+  logger.warn("messaggio modificato");
 });
 
 Message.afterDestroy(async () => {
@@ -137,8 +149,7 @@ const setAllUsersDisconnected = async () => {
   }
 };
 
-const connectUser = async ({ userId }) => {
-  // logger.info(`${userId} sta provando a connettersi`);
+const connectUser = async ({ userId, socketId }) => {
   let chats = [];
   let randomName = `User#${Math.round(Math.random() * 999999)}`;
   let [userDB, created] = await User.findOrCreate({
@@ -147,10 +158,12 @@ const connectUser = async ({ userId }) => {
       id: userId,
       online: 1,
       userName: randomName,
+      socket: socketId,
     },
   });
   if (!created) {
     userDB.online = 1;
+    userDB.socket = socketId;
     await userDB.save();
     chats = await getChatsByUserId({ id: userId });
   }
@@ -194,27 +207,39 @@ const getChatsByUserId = async ({ id }) => {
       },
       { model: User, through: { model: UserChat }, where: { id: id } },
     ],
-    order: [["createdAt", "DESC"]],
+    order: [["updatedAt", "ASC"]],
   });
   chats.length !== 0 &&
     (chats = await getDataValuesFromObject({ objects: chats }));
-  // console.log("chats: ", chats[0].Messages);
-  // console.log("chats: ", chats);
   return chats;
 };
 
 const sendMessage = async ({ data, id }) => {
   let ret = "ko";
   try {
-    const message = await Message.create({ text: data.message });
-    await message.setUser(id);
-    await message.setChat(data.idChat);
-    await message.save();
+    await Message.create({
+      text: data.message,
+      UserId: id,
+      ChatId: data.idChat,
+    });
     ret = "ok";
   } catch (error) {
     throw new Error(logger.error("Error creating a new message: ", error));
   }
   return ret;
+};
+
+const getMessage = async (idMessage) => {
+  console.log("idMessage: ", idMessage);
+  let message = await Message.findOne({
+    where: { id: idMessage },
+    include: [
+      {
+        model: User,
+      },
+    ],
+  });
+  return message.dataValues;
 };
 
 const changeUsername = async ({ user }) => {
@@ -255,6 +280,7 @@ const disconnectUser = async ({ userId }) => {
   let user = await User.findByPk(userId);
   if (user) {
     user.online = 0;
+    user.socket = "";
     await user.save();
   }
 };
@@ -272,6 +298,7 @@ const utilsDB = {
   disconnectUser,
   getChatsByUserId,
   sendMessage,
+  getMessage,
 };
 
 export { utilsDB };

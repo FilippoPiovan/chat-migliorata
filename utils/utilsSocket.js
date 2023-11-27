@@ -2,14 +2,13 @@ import { logger } from "./log.js";
 
 const onAdminLogin = () => {};
 
-const onUserLogin = async ({ user: userProp, callback, utilsDB }) => {
+const onUserLogin = async ({ user: userProp, callback, utilsDB, socketId }) => {
   logger.info(`Utente con id ${userProp.id} sta provando a collegarsi`);
   if (userProp.id !== null) {
     let { user, chats, allUsers } = await utilsDB.connectUser({
       userId: userProp.id,
+      socketId,
     });
-    // logger.info(`${user.id} aveva delle chat`);
-    // console.log("chats al login: ", chats);
     callback({ status: "user-initialization", chats, user, allUsers });
   } else {
     callback({
@@ -26,25 +25,29 @@ const onNameChanging = async ({ user, utilsDB }) => {
 
 const onCreateChat = async ({ id, data, callback, utilsDB }) => {
   logger.info(`Richiesta creazione nuova chat`);
-  // console.log("Dati dentro onCreateChat: ", id, data);
   let ret = await utilsDB.createChat({ id, data });
-  // console.log("ret: ", ret);
   ret.length === 0 ? callback({ status: "ko" }) : callback({ status: "ok" });
 };
 
 const onNeedMyChats = async ({ id, callback, utilsDB }) => {
   let chats = await utilsDB.getChatsByUserId({ id });
-  // let messagesChats = await utilsDB.getMessagesFromChat({ chats });
   chats
     ? callback({ ret: { status: "ok", chats: chats } })
     : callback({ ret: { status: "ko" } });
 };
 
 const onSendingMessage = async ({ data, id, callback, utilsDB }) => {
-  logger.info("Richiesta invio messaggio");
+  // console.log("L'utente chiede di mandare un nuovo messaggio");
   let stat = await utilsDB.sendMessage({ data, id });
   callback({ status: stat });
 };
+
+const onNeedMessages = async ({ idMessage, callback, utilsDB }) => {
+  let message = await utilsDB.getMessage(idMessage);
+  callback(message);
+};
+
+const createRoom = async ({ roomName, creatorSocket, otherMember }) => {};
 
 const onLogout = async ({ userId, utilsDB }) => {
   await utilsDB.disconnectUser({ userId });
@@ -56,7 +59,7 @@ export async function socketEventsHandler(io, utilsDB) {
       // invio informazioni all'admin
     });
     socket.on("user-login", async (user, callback) => {
-      await onUserLogin({ user, callback, utilsDB });
+      await onUserLogin({ user, callback, utilsDB, socketId: socket.id });
       socket.userId = user.id;
     });
     socket.on("name-changed", (user) => {
@@ -64,16 +67,29 @@ export async function socketEventsHandler(io, utilsDB) {
     });
     socket.on("create-chat", (data, callback) => {
       onCreateChat({ id: socket.userId, data, callback, utilsDB });
+      createRoom({
+        roomName: data.newGroupName,
+        creatorSocket: socket.id,
+        otherMember: data.groupSelected,
+      });
     });
     socket.on("need-my-chats", (id, callback) => {
       onNeedMyChats({ id, callback, utilsDB });
     });
     socket.on("sending-message", (data, callback) => {
-      console.log(socket.userId);
       onSendingMessage({ data, id: socket.userId, callback, utilsDB });
     });
+    socket.on("need-messages", (data, callback) => {
+      console.log(
+        data.idUser,
+        " ha ricevuto l'ordine di chiedere i messaggi: ",
+        data.time
+      );
+      data.idUser &&
+        data.idMessage &&
+        onNeedMessages({ idMessage: data.idMessage, callback, utilsDB });
+    });
     socket.on("disconnect", () => {
-      // socket.removeAllListeners();
       logger.info(`Client disconnesso ${socket.userId}`);
       onLogout({ userId: socket.userId, utilsDB });
     });

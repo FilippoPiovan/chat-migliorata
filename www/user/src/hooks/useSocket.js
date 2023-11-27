@@ -8,7 +8,7 @@ const useSocketEvents = () => {
   const [isSocketConnected, setIsSocketConnected] = useState(false);
   const { id, inizializza } = useUser();
   const { setUsers } = useUsers();
-  const { setChats } = useChats();
+  const { chats, setChats, setMessageToSpecifiedChat } = useChats();
 
   useEffect(() => {
     const onConnect = () => {
@@ -34,14 +34,27 @@ const useSocketEvents = () => {
     const onChatsUpdated = () => {
       console.log("chats aggiornate, richiedo update");
       socket.emit("need-my-chats", id, ({ ret }) => {
-        console.log(ret);
-        console.log("status: ", ret.status);
         if (ret.status === "ok") {
-          console.log("avevi delle chat");
-          console.log("ret.chats: ", ret.chats);
           setChats({ newChats: ret.chats });
         }
       });
+    };
+
+    const onNewMessage = ({ time, idChat, idMessage }) => {
+      console.log("onNewMessage");
+      let index = chats.findIndex((chat) => {
+        return chat.id === idChat;
+      });
+      if (index !== -1) {
+        console.log("Richiedo i messaggi: ", time);
+        socket.emit(
+          "need-messages",
+          { time, idUser: id, idMessage },
+          (message) => {
+            setMessageToSpecifiedChat({ id: idChat, message });
+          }
+        );
+      }
     };
 
     socket.on("connect", onConnect);
@@ -54,6 +67,8 @@ const useSocketEvents = () => {
 
     socket.on("chats-updated", onChatsUpdated);
 
+    socket.on("new-message", onNewMessage);
+
     return () => {
       socket.off("connect", onConnect);
 
@@ -64,8 +79,10 @@ const useSocketEvents = () => {
       socket.off("user-updated", onUserUpdated);
 
       socket.off("chats-updated", onChatsUpdated);
+
+      socket.off("new-message", onNewMessage);
     };
-  }, [id, inizializza, setUsers]);
+  }, [chats, id, inizializza, setChats, setMessageToSpecifiedChat, setUsers]);
 
   return { socket, isSocketConnected };
 };

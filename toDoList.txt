@@ -5,3 +5,5 @@ manca:
 SELECT DISTINCT Users.id as idUser, Chats.id as idChat, M1.text, M1.id as idMess, M1.createdAt, M1.updatedAt
 FROM Messages as M1 join Chats on M1.ChatId = Chats.id, Users join Messages as M2 on Users.id = M2.UserId
 WHERE Users.id = 1;
+
+dbaeumer.vscode-eslint

@@ -10,7 +10,16 @@ export const useChats = create(
     setChats: ({ newChats }) => {
       set((state) => {
         state.chats = newChats;
-        // console.log("chat nello store", state.chats);
+      });
+    },
+    setMessageToSpecifiedChat: ({ id, message }) => {
+      set((state) => {
+        let index = state.chats.findIndex((chat) => {
+          return chat.id === id;
+        });
+        // console.log("tutte le chat prima: ", state.chats);
+        state.chats[index].Messages.push(message);
+        // console.log("tutte le chat dopo: ", state.chats);
       });
     },
   }))

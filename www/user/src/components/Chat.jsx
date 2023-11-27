@@ -2,13 +2,24 @@ import PropTypes from "prop-types";
 import { useChats } from "../stores/storeChats.js";
 import { useUser } from "../stores/storeUser.js";
 import { Input, Button } from "@nextui-org/react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 const Chat = ({ idChat, socket }) => {
   const { id } = useUser();
   const { chats } = useChats();
   const [message, setMessage] = useState("");
+  const messagesEndRef = useRef(null);
   let index = undefined;
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+    console.log("chats: ", chats);
+  }, [chats, idChat]);
+
   if (chats) {
     index = chats.findIndex((chat) => {
       return chat.id === idChat;
@@ -27,7 +38,6 @@ const Chat = ({ idChat, socket }) => {
     }
   };
 
-  // console.log(chats[index]);
   return (
     <>
       <div className="px-3 py-2">
@@ -45,8 +55,6 @@ const Chat = ({ idChat, socket }) => {
         {idChat !== null ? (
           <>
             {chats[index].Messages.map((value, key) => {
-              // console.log("value: ", value.UserId === id);
-              // console.log("key: ", key);
               return value.UserId === id ? (
                 <div key={key} className="flex justify-end m-1">
                   <p className="bg-slate-400 max-w-[600px] px-1 rounded-small">
@@ -61,14 +69,10 @@ const Chat = ({ idChat, socket }) => {
                 </div>
               );
             })}
+            <div ref={messagesEndRef} />
           </>
         ) : (
           <div className="flex justify-center items-center h-40">
-            {/* <link
-              rel="stylesheet"
-              href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
-            />
-            <span className="material-symbols-outlined">forum</span> */}
             <p>Vuoto</p>
           </div>
         )}
@@ -106,6 +110,7 @@ const Chat = ({ idChat, socket }) => {
 
 Chat.propTypes = {
   idChat: PropTypes.number,
+  socket: PropTypes.object,
 };
 
 export default Chat;
