@@ -6,8 +6,8 @@ import useSocketEvents from "./hooks/useSocket.js";
 import useQueryURL from "./hooks/useQueryURL.js";
 import SideList from "./components/SideList.jsx";
 import NavbarContainer from "./components/NavbarContainer.jsx";
+import Login from "./components/Login.jsx";
 import Chat from "./components/Chat.jsx";
-import Error from "./components/Error.jsx";
 import { callbackManager } from "./utils/utilsApp.js";
 import { Divider } from "@nextui-org/react";
 
@@ -49,18 +49,18 @@ function User() {
               isSocketConnected={isSocketConnected}
             />
             <Divider />
-            <div className="flex flex-col flex-1">
+            <div className="flex flex-col flex-1 max-h-full">
               <div className="flex-1 flex">
                 <CurrentChatOpened.Provider value={currentChat}>
                   <div
                     className="bg-red-200 w-[20%] p-2 overflow-auto "
-                    style={{ maxHeight: "calc(100vh - 63px)" }}
+                    // style={{ maxHeight: "calc(100vh - 64px)" }}
                   >
                     <SideList chats={chats} setCurrentChat={setCurrentChat} />
                   </div>
                   <div
                     className="bg-blue-200 w-[80%] overflow-auto flex flex-col"
-                    style={{ maxHeight: "calc(100vh - 63px)" }}
+                    // style={{ maxHeight: "calc(100vh - 64px)" }}
                   >
                     <Chat idChat={currentChat} socket={socket} />
                   </div>
@@ -71,7 +71,7 @@ function User() {
         </>
       ) : (
         <>
-          <Error />
+          <Login />
         </>
       )}
     </>

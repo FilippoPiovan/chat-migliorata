@@ -6,7 +6,7 @@ import { useChats } from "../stores/storeChats.js";
 
 const useSocketEvents = () => {
   const [isSocketConnected, setIsSocketConnected] = useState(false);
-  const { id, inizializza } = useUser();
+  const { id } = useUser();
   const { setUsers } = useUsers();
   const { chats, setChats, setMessageToSpecifiedChat } = useChats();
 
@@ -21,18 +21,11 @@ const useSocketEvents = () => {
       setIsSocketConnected(false);
     };
 
-    // da aggiungere: chat aggiornate, utenti aggiornati, messaggi aggiornati
-    const onInizializza = (idUtente) => {
-      inizializza(idUtente);
-    };
-
-    const onUserUpdated = (allUsers) => {
-      // console.log("utenti aggiornati");
+    const onUsersUpdated = (allUsers) => {
       setUsers({ users: allUsers, id });
     };
 
     const onChatsUpdated = () => {
-      console.log("chats aggiornate, richiedo update");
       socket.emit("need-my-chats", id, ({ ret }) => {
         if (ret.status === "ok") {
           setChats({ newChats: ret.chats });
@@ -40,30 +33,18 @@ const useSocketEvents = () => {
       });
     };
 
-    const onNewMessage = ({ time, idChat, idMessage }) => {
-      console.log("onNewMessage");
-      let index = chats.findIndex((chat) => {
-        return chat.id === idChat;
+    const onNewMessage = ({ text, idChat, idMessage }) => {
+      console.log("onNewMessage: ", text);
+      socket.emit("need-messages", { idUser: id, idMessage }, (message) => {
+        setMessageToSpecifiedChat({ id: idChat, message });
       });
-      if (index !== -1) {
-        console.log("Richiedo i messaggi: ", time);
-        socket.emit(
-          "need-messages",
-          { time, idUser: id, idMessage },
-          (message) => {
-            setMessageToSpecifiedChat({ id: idChat, message });
-          }
-        );
-      }
     };
 
     socket.on("connect", onConnect);
 
     socket.on("disconnect", onDisconnect);
 
-    socket.on("inizializza", onInizializza);
-
-    socket.on("user-updated", onUserUpdated);
+    socket.on("user-updated", onUsersUpdated);
 
     socket.on("chats-updated", onChatsUpdated);
 
@@ -74,15 +55,13 @@ const useSocketEvents = () => {
 
       socket.off("disconnect", onDisconnect);
 
-      socket.off("inizializza", onInizializza);
-
-      socket.off("user-updated", onUserUpdated);
+      socket.off("user-updated", onUsersUpdated);
 
       socket.off("chats-updated", onChatsUpdated);
 
       socket.off("new-message", onNewMessage);
     };
-  }, [chats, id, inizializza, setChats, setMessageToSpecifiedChat, setUsers]);
+  }, [chats, id, setChats, setMessageToSpecifiedChat, setUsers]);
 
   return { socket, isSocketConnected };
 };

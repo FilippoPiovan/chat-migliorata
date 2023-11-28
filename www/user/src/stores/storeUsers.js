@@ -9,7 +9,6 @@ export const useUsers = create(
     users: [],
     setUsers: ({ users, id }) => {
       set((state) => {
-        // se da errore cambia il nome nel socket
         state.users = users.filter((user) => user.id !== id);
       });
     },

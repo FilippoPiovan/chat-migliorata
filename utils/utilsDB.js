@@ -1,6 +1,7 @@
-import { DataTypes, Sequelize } from "sequelize";
+import { DataTypes, Sequelize, Op } from "sequelize";
 import { logger } from "./log.js";
 import { io } from "../server-index.js";
+import { socket } from "../www/user/src/socket/socket.js";
 
 const sequelize = new Sequelize({
   dialect: "sqlite",
@@ -97,19 +98,20 @@ Chat.afterDestroy(async () => {
   logger.info("chat distrutta");
 });
 
-UserChat.afterBulkCreate(async () => {
+UserChat.afterBulkCreate(async (userChat) => {
   // dopo che una chat è stata creata non è un bene che tutti possano vedere tutte le chat perché devo mandarlo solo a pochi utenti
   // mando un "ping" a tutti gli utenti che risponderanno nel canale "need-my-chats"
   logger.warn("UserChats creati");
 
+  joinUsersToRoom(userChat);
   // serve solo per avvisare tutti che una chat è stata modificata (senza specificare quale)
   io.emit("chats-updated");
 });
 
 Message.afterCreate(async (message) => {
-  logger.error("nuovo messaggio");
-  io.emit("new-message", {
-    time: Date.now(),
+  logger.info("nuovo messaggio");
+  io.to(message.dataValues.ChatId).emit("new-message", {
+    text: message.dataValues.text,
     idChat: message.dataValues.ChatId,
     idMessage: message.dataValues.id,
   });
@@ -140,6 +142,7 @@ const setAllUsersDisconnected = async () => {
   let ret = false;
   try {
     await User.update({ online: 0 }, { where: { online: 1 } });
+    await User.update({ socket: "" }, { where: {} });
     logger.info("Utenti resettati");
     ret = true;
   } catch (error) {
@@ -171,6 +174,43 @@ const connectUser = async ({ userId, socketId }) => {
     who: "all",
   });
   return { user: userDB.dataValues, chats, allUsers };
+};
+
+const joinUsersToRoom = async (userChat) => {
+  let userChatDataValues = await getDataValuesFromObject({ objects: userChat });
+  let socketsOfUsers = await User.findAll({
+    attributes: ["id"],
+    where: { socket: { [Op.not]: "" } },
+    include: {
+      model: Chat,
+      through: UserChat,
+      attributes: [],
+      where: { id: userChatDataValues[0].ChatId },
+    },
+  });
+  socketsOfUsers = await getDataValuesFromObject({ objects: socketsOfUsers });
+  io.sockets.sockets.forEach((socket) => {
+    socketsOfUsers.find((socketOfUser) => socketOfUser.socket === socket.id) &&
+      socket.join(userChatDataValues[0].ChatId);
+  });
+};
+
+const joinUserToRooms = async ({ id, socket }) => {
+  let chats = await Chat.findAll({
+    attributes: ["id"],
+    include: {
+      model: User,
+      through: UserChat,
+      where: {
+        id: id,
+      },
+    },
+  });
+  chats = await getDataValuesFromObject({ objects: chats });
+  for (let chat of chats) {
+    socket.join(chat.id);
+    // console.log(socket.id, " aggiunto alla chat ", chat.chatName);
+  }
 };
 
 const getAllUsers = async ({ who }) => {
@@ -214,6 +254,10 @@ const getChatsByUserId = async ({ id }) => {
   return chats;
 };
 
+const getChatId = async ({ roomName }) => {
+  return await Chat.findOne({ where: { chatName: roomName } });
+};
+
 const sendMessage = async ({ data, id }) => {
   let ret = "ko";
   try {
@@ -230,7 +274,6 @@ const sendMessage = async ({ data, id }) => {
 };
 
 const getMessage = async (idMessage) => {
-  console.log("idMessage: ", idMessage);
   let message = await Message.findOne({
     where: { id: idMessage },
     include: [
@@ -242,6 +285,18 @@ const getMessage = async (idMessage) => {
   return message.dataValues;
 };
 
+const getSocketsIdOfUsers = async ({ members }) => {
+  let sockets = [];
+  let users = await User.findAll({
+    where: { id: members, socket: { [Op.not]: "" } },
+  });
+  users = await getDataValuesFromObject({ objects: users });
+  users.forEach((user) => {
+    sockets.push(user.socket);
+  });
+  return sockets;
+};
+
 const changeUsername = async ({ user }) => {
   let userFound = await User.findByPk(user.id);
   userFound.userName = user.name;
@@ -249,11 +304,10 @@ const changeUsername = async ({ user }) => {
 };
 
 const createChat = async ({ id, data }) => {
-  const name = await getUserName({ id });
-  data.groupSelected.push(name.userName);
+  data.groupSelected.push(id);
   let newChat = await Chat.create({ chatName: data.newGroupName });
   let usersOfTheGroup = await User.findAll({
-    where: { userName: data.groupSelected },
+    where: { id: data.groupSelected },
   });
   let usersChatsMap = usersOfTheGroup.map((user) => {
     return { UserId: user.id, ChatId: newChat.dataValues.id };
@@ -276,7 +330,6 @@ const getDataValuesFromObject = async ({ objects }) => {
 };
 
 const disconnectUser = async ({ userId }) => {
-  // console.log(userId);
   let user = await User.findByPk(userId);
   if (user) {
     user.online = 0;
@@ -293,12 +346,14 @@ const utilsDB = {
   synchronizeDB,
   setAllUsersDisconnected,
   connectUser,
+  joinUserToRooms,
   changeUsername,
   createChat,
   disconnectUser,
   getChatsByUserId,
   sendMessage,
   getMessage,
+  getSocketsIdOfUsers,
 };
 
 export { utilsDB };

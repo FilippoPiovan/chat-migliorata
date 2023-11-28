@@ -26,14 +26,11 @@ export default function App({ socket }) {
 
   const send = (onClose) => {
     console.log("Chat creata, seh, credeghe");
-    // groupSelected ['NomeUno', 'NomeDue', ... , 'NomeN']
+    // groupSelected [idUtenteUno, ... , idUtenteN]
     socket.emit("create-chat", { groupSelected, newGroupName }, (ret) => {
       // la chat arriva all'utente una volta che viene creata nel DB grazie a 'afterBulkCreate'
       // alert per avvertire del successo o meno dell'operazione (non funziona benissimo)
 
-      // ret.status === "ok"
-      //   ? alert("operazione andata a buon fine")
-      //   : alert("chat non creata");
       ret.status === "ok"
         ? console.log("operazione andata a buon fine")
         : console.log("operazione NON andata a buon fine");
@@ -90,7 +87,7 @@ export default function App({ socket }) {
                             <CustomCheckbox
                               className="flex-grow"
                               key={user.id}
-                              value={user.userName}
+                              value={user.id}
                               user={{
                                 name: user.userName,
                                 status: user.online,
@@ -128,9 +125,6 @@ export default function App({ socket }) {
                         placeholder={" "}
                         value={newGroupName}
                       />
-                      <p className="mt-4 ml-1">
-                        Users selected: {groupSelected.join(", ")}
-                      </p>
                     </div>
                   </ModalBody>
                   <ModalFooter>

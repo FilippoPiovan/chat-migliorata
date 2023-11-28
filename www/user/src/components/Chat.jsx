@@ -17,7 +17,6 @@ const Chat = ({ idChat, socket }) => {
 
   useEffect(() => {
     scrollToBottom();
-    console.log("chats: ", chats);
   }, [chats, idChat]);
 
   if (chats) {
@@ -83,7 +82,7 @@ const Chat = ({ idChat, socket }) => {
             placeholder="Scrivi un messaggio"
             value={message}
             onValueChange={setMessage}
-            color="primary"
+            color="default"
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 handleMessageSubmit();
