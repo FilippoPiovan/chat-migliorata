@@ -73,11 +73,6 @@ export async function socketEventsHandler(io, utilsDB) {
       onSendingMessage({ data, id: socket.userId, callback, utilsDB });
     });
     socket.on("need-messages", (data, callback) => {
-      console.log(
-        data.idUser,
-        " ha ricevuto l'ordine di chiedere i messaggi: ",
-        data.time
-      );
       data.idUser &&
         data.idMessage &&
         onNeedMessages({ idMessage: data.idMessage, callback, utilsDB });

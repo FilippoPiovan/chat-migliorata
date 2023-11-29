@@ -1,7 +1,6 @@
 import { DataTypes, Sequelize, Op } from "sequelize";
 import { logger } from "./log.js";
 import { io } from "../server-index.js";
-import { socket } from "../www/user/src/socket/socket.js";
 
 const sequelize = new Sequelize({
   dialect: "sqlite",
@@ -86,24 +85,12 @@ User.afterUpdate(async () => {
   io.emit("user-updated", await getAllUsers({ who: "all" }));
 });
 
-Chat.afterCreate(async () => {
-  logger.info("chat creata");
-});
-
-Chat.afterUpdate(async () => {
-  logger.info("chat modificata");
-});
-
-Chat.afterDestroy(async () => {
-  logger.info("chat distrutta");
-});
-
 UserChat.afterBulkCreate(async (userChat) => {
   // dopo che una chat è stata creata non è un bene che tutti possano vedere tutte le chat perché devo mandarlo solo a pochi utenti
   // mando un "ping" a tutti gli utenti che risponderanno nel canale "need-my-chats"
   logger.warn("UserChats creati");
 
-  joinUsersToRoom(userChat);
+  await joinUsersToRoom(userChat);
   // serve solo per avvisare tutti che una chat è stata modificata (senza specificare quale)
   io.emit("chats-updated");
 });
@@ -115,14 +102,6 @@ Message.afterCreate(async (message) => {
     idChat: message.dataValues.ChatId,
     idMessage: message.dataValues.id,
   });
-});
-
-Message.afterUpdate(async () => {
-  logger.warn("messaggio modificato");
-});
-
-Message.afterDestroy(async () => {
-  logger.info("messaggio eliminato");
 });
 
 const synchronizeDB = async () => {
@@ -179,7 +158,7 @@ const connectUser = async ({ userId, socketId }) => {
 const joinUsersToRoom = async (userChat) => {
   let userChatDataValues = await getDataValuesFromObject({ objects: userChat });
   let socketsOfUsers = await User.findAll({
-    attributes: ["id"],
+    attributes: ["socket"],
     where: { socket: { [Op.not]: "" } },
     include: {
       model: Chat,
@@ -209,7 +188,6 @@ const joinUserToRooms = async ({ id, socket }) => {
   chats = await getDataValuesFromObject({ objects: chats });
   for (let chat of chats) {
     socket.join(chat.id);
-    // console.log(socket.id, " aggiunto alla chat ", chat.chatName);
   }
 };
 
@@ -229,7 +207,6 @@ const getAllUsers = async ({ who }) => {
     default:
       break;
   }
-  // estrapolare solo i dataValues degli utenti
   ret = await getDataValuesFromObject({ objects: users });
   return ret;
 };
@@ -252,10 +229,6 @@ const getChatsByUserId = async ({ id }) => {
   chats.length !== 0 &&
     (chats = await getDataValuesFromObject({ objects: chats }));
   return chats;
-};
-
-const getChatId = async ({ roomName }) => {
-  return await Chat.findOne({ where: { chatName: roomName } });
 };
 
 const sendMessage = async ({ data, id }) => {
@@ -314,11 +287,6 @@ const createChat = async ({ id, data }) => {
   });
   let ret = await UserChat.bulkCreate(usersChatsMap);
   return ret;
-};
-
-const getUserName = async ({ id }) => {
-  let user = await User.findByPk(id);
-  return user;
 };
 
 const getDataValuesFromObject = async ({ objects }) => {

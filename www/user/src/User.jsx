@@ -6,7 +6,7 @@ import useSocketEvents from "./hooks/useSocket.js";
 import useQueryURL from "./hooks/useQueryURL.js";
 import SideList from "./components/SideList.jsx";
 import NavbarContainer from "./components/NavbarContainer.jsx";
-import Login from "./components/Login.jsx";
+import Error from "./components/Error.jsx";
 import Chat from "./components/Chat.jsx";
 import { callbackManager } from "./utils/utilsApp.js";
 import { Divider } from "@nextui-org/react";
@@ -71,7 +71,7 @@ function User() {
         </>
       ) : (
         <>
-          <Login />
+          <Error />
         </>
       )}
     </>
